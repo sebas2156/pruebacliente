@@ -66,7 +66,7 @@ const Navbar = ({ sidebarWidth = "260px" }) => {
   }, [notificationsOpen, profileOpen]);
 
   return (
-    <NavbarContainer sidebarWidth={sidebarWidth}>
+    <NavbarContainer $sidebarWidth={sidebarWidth}>
       <NavbarLeft>
         <SearchContainer>
           <SearchIconWrapper>

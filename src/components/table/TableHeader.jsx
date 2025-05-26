@@ -24,10 +24,10 @@ const TableHeader = ({
       </LeftSection>
 
       <RightSection>
-        <ExportButton onClick={onExportExcel} variant="excel">
+        <ExportButton onClick={onExportExcel} $variant="excel">
           <Sheet /> Excel
         </ExportButton>
-        <ExportButton onClick={onExportPDF} variant="pdf">
+        <ExportButton onClick={onExportPDF} $variant="pdf">
           <FileText />
           PDF
         </ExportButton>

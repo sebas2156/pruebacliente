@@ -69,7 +69,7 @@ const Sidebar = () => {
   };
 
   return (
-    <SidebarContainer collapsed={isCollapsed}>
+    <SidebarContainer $collapsed={true}>
       <SidebarHeader>
         <LogoContainer>
           {!isCollapsed ? (

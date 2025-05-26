@@ -4,11 +4,12 @@ import Sidebar from "../../components/ui/sidebar";
 import { Outlet } from "react-router-dom";
 
 const Layout = () => {
+  const sidebarWidth = "260px"; // constante reutilizable
   return (
     <Conteiner>
       <Sidebar />
       <DivPage>
-        <Navbar />
+        <Navbar sidebarWidth={sidebarWidth} />
         <DivOutlet>
           <Outlet />
         </DivOutlet>
@@ -18,6 +19,7 @@ const Layout = () => {
 };
 
 export default Layout;
+
 const Conteiner = styled.div`
   width: 100vw;
   height: 100vh;
@@ -28,8 +30,10 @@ const Conteiner = styled.div`
 const DivPage = styled.div`
   display: flex;
   flex-direction: column;
+  flex-grow: 1; /* para ocupar espacio restante del sidebar */
 `;
 
 const DivOutlet = styled.div`
-  height: calc(60px - 100vh);
+  height: calc(100vh - 60px);
+  overflow: auto;
 `;
