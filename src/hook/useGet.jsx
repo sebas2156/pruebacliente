@@ -1,100 +1,68 @@
-import { useState } from "react";
-import PageContainer from "../../../components/pageContainer";
-import Table from "../../../components/table/table";
-import { createColumnHelper } from "@tanstack/react-table";
+import { getParamsStr } from "../utils/getParamsStr";
+import apiClient from "../api/apiClient";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { toastError } from "../utils/toast";
 
-import { useGet } from "../../../hooks/useGet"; // Ajusta la ruta según tu estructura
+export const useGet = (endpoint, keys, options = {}) => {
+  const { params, save = true, send = true, alert = true, onError } = options;
+  const url = params ? `${endpoint}${getParamsStr(params)}` : endpoint;
+  const queryClient = useQueryClient();
 
-const Usuarios = () => {
-  const columnHelper = createColumnHelper();
+  const { data, isLoading, error, refetch, ...rest } = useQuery({
+    queryKey: keys,
+    enabled: send,
+    queryFn: async () => {
+      try {
+        const response = await apiClient.get(url);
+        
+        // Manejar nuevo token desde cuerpo o headers
+        const newToken = response.data?.newToken || response.headers["x-new-token"];
+        if (newToken) {
+          localStorage.setItem("access_token", newToken);
+          console.log("Token actualizado desde respuesta");
+        }
+        
+        if (response.data.status && response.data.status !== 200) {
+          throw new Error(response.data.message || "Error en la solicitud");
+        }
+        
+        // Retornar datos estructurados
+        return {
+          data: response.data.data || response.data,
+          raw: response.data
+        };
+      } catch (err) {
+        if (alert) {
+          toastError(err.response?.data?.message || err.message);
+        }
+        if (onError) {
+          onError(err);
+        }
+        throw err;
+      }
+    },
+    retry: (failureCount, error) => {
+      return error.response?.status !== 401 && failureCount < 1;
+    },
+    retryDelay: 1000,
+  });
 
-  // Usamos useGet para obtener los usuarios con React Query
-  const { data, loading, refetch } = useGet(
-    "api/usuario/usuarios/",
-    ["usuarios", 0, 10],
-    { params: { skip: 0, limit: 10 } }
-  );
+  useEffect(() => {
+    return () => {
+      if (!save) {
+        queryClient.removeQueries({ queryKey: keys });
+      }
+    };
+  }, [queryClient, keys, save]);
 
-  // Estado local para poder modificar la tabla (eliminar filas localmente)
-  const [localData, setLocalData] = useState([]);
-
-  // Cuando data cambie, sincronizamos localData (siempre que data exista)
-  React.useEffect(() => {
-    if (data?.items) {
-      setLocalData(data.items);
-    }
-  }, [data]);
-
-  const columns = [
-    columnHelper.accessor("id", {
-      header: "ID",
-      cell: (info) => info.getValue(),
-    }),
-    columnHelper.accessor("usuario", {
-      header: "Usuario",
-      cell: (info) => <strong>{info.getValue()}</strong>,
-    }),
-    columnHelper.accessor("estado", {
-      header: "Estado",
-      cell: (info) => {
-        const estado = info.getValue();
-        const esActivo = estado === "activo";
-        return (
-          <span
-            style={{
-              padding: "4px 8px",
-              borderRadius: "12px",
-              fontSize: "12px",
-              fontWeight: "500",
-              backgroundColor: esActivo ? "#d4edda" : "#f8d7da",
-              color: esActivo ? "#155724" : "#721c24",
-              textTransform: "capitalize",
-            }}
-          >
-            {estado}
-          </span>
-        );
-      },
-    }),
-    columnHelper.accessor("idsucursal", {
-      header: "ID Sucursal",
-      cell: (info) => info.getValue(),
-    }),
-    columnHelper.accessor("idpersona", {
-      header: "ID Persona",
-      cell: (info) => info.getValue(),
-    }),
-  ];
-
-  const handleAdd = () => {
-    console.log("Agregar usuario no implementado todavía");
+  return { 
+    data: data?.data,       // Datos normalizados
+    rawData: data?.raw,     // Respuesta completa de la API
+    loading: isLoading, 
+    error, 
+    refetch,
+    isUnauthorized: error?.response?.status === 401,
+    ...rest
   };
-
-  const handleEdit = (row) => {
-    console.log("Editar usuario:", row);
-  };
-
-  const handleDelete = (row) => {
-    if (window.confirm(`¿Estás seguro de eliminar al usuario ${row.usuario}?`)) {
-      setLocalData(localData.filter((item) => item.id !== row.id));
-    }
-  };
-
-  if (loading) {
-    return <PageContainer title="Gestión de Usuarios">Cargando...</PageContainer>;
-  }
-
-  return (
-    <PageContainer title={"Gestión de Usuarios"}>
-      <Table
-        data={localData}
-        columns={columns}
-        onAdd={handleAdd}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
-    </PageContainer>
-  );
 };
-
-export default Usuarios;

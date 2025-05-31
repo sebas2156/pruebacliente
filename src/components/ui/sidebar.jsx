@@ -24,6 +24,11 @@ const menuItems = [
     path: ROUTES.USERS,
   },
   {
+    title: "Bloques",
+    icon: <ResidentsIcon />,
+    path: ROUTES.BLOQUES,
+  },
+  {
     title: "Facturas",
     icon: <InvoicesIcon />,
     path: ROUTES.FACTURAS,
